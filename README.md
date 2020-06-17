@@ -11,7 +11,7 @@ https://lbs.qq.com/miniProgram/jsSdk/jsSdkGuide/jsSdkOverview
 
 - 配置页面路径src/addressAdmin/selectPostion.wpy
 - 将key、SK替换成自己的
-- 如果项目将要复制，别忘了他的引入其他的包
+- 如果项目将要复制，别忘引入其他的包
 
 
 #### 还有别忘了这个是wepy小程序2.0
