@@ -1,12 +1,17 @@
 ### 肯定要看文档啊
-二话不说，这是腾讯地图map实现
+二话不说，这是小程序wepy框架选择——腾讯地图
 
 ##### 先上腾讯地图地址
 https://lbs.qq.com/miniProgram/jsSdk/jsSdkGuide/jsSdkOverview
 
-1、聪明的人已经懂得去知道key和sk这两个东西在我们项目中哪里去配置了
-2、打开项目目录scr/addressAdmin/selectPostion.wpy文件中复制你的两个值key、sk
-3、运行你的小程序
+- npm install
+- npm run dev
+
+运行打开小程序
+
+- 配置页面路径src/addressAdmin/selectPostion.wpy
+- 将key、SK替换成自己的
+- 如果项目将要复制，别忘了他的引入其他的包
 
 
-##### 注意此项目其实只提供展示而已，看看就会了吧！如果复制代码，别忘了看看其他包的关联。这个是从自己项目中盘过来的，还没有做成插件。
+#### 还有别忘了这个是wepy小程序2.0
