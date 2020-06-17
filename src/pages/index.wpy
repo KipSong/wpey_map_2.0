@@ -1,0 +1,62 @@
+<style lang="less">
+</style>
+
+<template>
+  <div class="page">
+    <div v-for="item in list ">{{item.address}}</div>
+    <button  @tap="handleSelctLoacation">选择位置</button>
+  </div>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import { mapState } from '@wepy/x';
+import store from '@/store';
+import testMixin from '@/mixins/user';
+
+wepy.page({
+  store,
+  config: {
+    navigationBarTitleText: 'test'
+  },
+
+  hooks: {
+    // Page 级别 hook, 只对当前 Page 的 setData 生效。
+    'before-setData': function(dirty) {
+      dirty.time = +new Date();
+      return dirty;
+    }
+  },
+
+  data: {
+    list: []
+  },
+
+  computed: {},
+  methods: {
+    handleSelctLoacation() {
+      wx.navigateTo({
+        url: './addressAdmin/selectPosition?name=1',
+        events: {
+          successAddress: function(data) {
+            this.list.push(data);
+          }.bind(this)
+        },
+        success: function(res) {
+          console.log(res);
+        }.bind(this)
+      });
+    }
+  },
+
+  created() {}
+});
+</script>
+<config>
+{
+    navigationBarTitleText: '选择位置',
+    usingComponents: {
+
+    }
+}
+</config>

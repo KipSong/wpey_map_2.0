@@ -1,0 +1,357 @@
+<style lang="less">
+.kipsong-map-view {
+  width: 100%;
+  height: 500rpx;
+}
+.kipsong-positon-img-coverview {
+  width: 64rpx;
+  height: 64rpx;
+  position: absolute;
+  bottom: 60rpx;
+  right: 30rpx;
+}
+.kipsong-search-container-view {
+  position: absolute;
+  width: 100%;
+  background-color: #ffffff;
+  border-radius: 40rpx 40rpx 0;
+  top: 450rpx;
+  bottom: 0;
+}
+.kipsong-inner-container-view {
+  height: 100%;
+  overflow: hidden;
+}
+.kipsong-search-content-view {
+  display: flex;
+  width: 650rpx;
+  margin: 0px auto;
+  height: 80rpx;
+  line-height: 80rpx;
+  border-radius: 12rpx;
+  background-color: #e6e6e6;
+  margin-top: 48rpx;
+}
+.kipsong-search-left-img-view {
+  width: 42rpx;
+  height: 42rpx;
+  margin: 20rpx 32rpx 0px 24rpx;
+}
+.kipsong-search-right-input-view {
+  width: 520rpx;
+  height: 80rpx;
+  line-height: 80rpx;
+  font-size: 30rpx;
+}
+.kipsong-search-scroll-view {
+  width: 100%;
+  margin-top: 20rpx;
+}
+.kipsong-search-list-item-view {
+    width: 650rpx;
+  margin: 0px auto;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 2rpx solid #aeaeae;
+}
+.kipsong-list-item-left-view {
+  width: 550rpx;
+}
+.kipsong-list-item-right-img-view {
+  width: 56rpx;
+  height: 56rpx;
+  align-self: center;
+}
+.kipsong-serch-item-title-view {
+  font-size: 30rpx;
+  color: #000000;
+  font-weight: 600;
+  margin-top: 30rpx;
+  margin-bottom: 8rpx;
+}
+.kipsong-serch-item-address-view {
+  font-size: 26rpx;
+  color: #000000;
+  font-weight: 400;
+  margin-bottom: 15rpx;
+}
+.kipsong-submit-button-view {
+  width: 650rpx;
+  margin: 0px auto;
+  height: 100rpx;
+  line-height: 100rpx;
+  background-color: #000000;
+  color: #ffffff;
+  font-size: 32rpx;
+  border-radius: 10rpx;
+  text-align: center;
+  margin-top: 10rpx;
+  &:active {
+    opacity: 0.8;
+  }
+}
+</style>
+
+<template>
+  <view class="body">
+    <view class="kipsong-map-view">
+      <map style="width:100%;height:100%;" id="map" longitude="{{mapInfo.longitude}}" latitude="{{mapInfo.latitude}}" scale="14" markers="{{markers}}" >
+        <view class="kipsong-positon-img-coverview" @tap="handleToCurrentLocation">
+          <image style="width:100%;height:100%;" src="../../assets/images/target-icon.png"/>
+        </view>
+      </map>
+    </view>
+    <view class="kipsong-search-container-view" >
+      <view class="kipsong-inner-container-view">
+        <view class="kipsong-search-content-view">
+          <view class="kipsong-search-left-img-view">
+            <image style="width:100%;height:100%;" src="../../assets/images/search-icon.png"/>
+          </view>
+          <view class="kipsong-search-right-input-view">
+            <input  style="width:100%;height:100%;" v-model="searchValue"  placeholder="搜索地址"/>
+          </view>
+        </view>
+        <scroll-view scroll-y class="kipsong-search-scroll-view" style="height:{{scrollHeight}}px;">
+          <view class="kipsong-search-list-item-view" v-for="(item, idx) in addressList"  @tap="handleSelectLocation(idx)">
+            <view class="kipsong-list-item-left-view">
+              <view class="kipsong-serch-item-title-view">{{item.title}}</view>
+              <view class="kipsong-serch-item-address-view">{{item.address}}</view>
+            </view>
+            <view wx:if="{{item.selected}}" class="kipsong-list-item-right-img-view">
+               <image style="width:100%;height:100%;" src="../../assets/images/selected-icon.png"/>
+            </view>
+          </view>
+        </scroll-view>
+        <view class="kipsong-submit-button-view" @tap="handleSubmitSuccess">确定</view>
+      </view>
+    </view>
+
+    <location-dialog :showModal="showModal" @close="closeDialog" @success="authSuccess"></location-dialog>
+  </view>
+</template>
+
+<script>
+import wepy from '@wepy/core';
+import { throttle } from '@/utils';
+import {
+  getSysHeight,
+  getClientType,
+  changePXToRPX,
+  changeRPXToPX
+} from '@/utils/wx-system';
+var QQMapWX = require('@/utils/sdk/qqmap-wx-jssdk.js');
+wepy.page({
+  data: {
+    eventChannel: null,
+    key: 'BOFBZ-5WW3S-QXYOG-6Z53A-FNYD2-ZCBHC',
+    sk: 'xpY7JfN45MYRK0ZfdpmwXPHFrvMRhuPu',
+    qqmapsdk: null,
+    mapCtx: null,
+    mapInfo: {
+      longitude: '',
+      latitude: ''
+    },
+    markers: [
+      {
+        iconPath: '../../assets/images/positon-icon.png',
+        id: 0,
+        latitude: 32.39444,
+        longitude: 119.43362,
+        width: 31,
+        height: 38.5
+      }
+    ],
+    currentAddrss: '扬州',
+    addressList: [],
+    searchHeight: 0,
+    scrollHeight: 0,
+    searchValue: '',
+    showModal: false
+  },
+  watch: {
+    searchValue(value, old) {
+      this.throttleSearch();
+    }
+  },
+  computed: {},
+  methods: {
+    /**
+     * 节流搜索
+     */
+    handleSearch() {
+      if ((this.searchValue + '').trim() != '') {
+        this.searchLocation(this.searchValue);
+      } else {
+        this.searchLocation(this.currentAddrss);
+      }
+    },
+    /**
+     * 获取当前位置
+     */
+    handleToCurrentLocation() {
+      wx.getLocation({
+        type: 'gcj02',
+        success: function(res) {
+          const latitude = res.latitude;
+          const longitude = res.longitude;
+          this.mapInfo.scale = 14;
+          this.qqmapsdk.reverseGeocoder({
+            location: {
+              latitude: latitude,
+              longitude: longitude
+            },
+            sig: this.sk,
+            success: function({ result }) {
+              let address = result.formatted_addresses
+                ? result.formatted_addresses.recommend
+                : result.address;
+              this.currentAddrss = address;
+              this.searchLocation(address);
+            }.bind(this),
+            fail: function(err) {}
+          });
+        }.bind(this),
+        fail: function fail(err) {
+          this.showModal = true;
+        }.bind(this)
+      });
+    },
+    /**
+     * 搜索地址
+     */
+    searchLocation(keyword) {
+      this.qqmapsdk.getSuggestion({
+        keyword: keyword,
+        sig: this.sk,
+        success: function(res) {
+          this.addressList = res.data;
+          if (this.addressList.length == 0) {
+            wx.showToast({
+              title: '当前暂无数据哦～',
+              icon: 'none',
+              duration: 1500
+            });
+          } else {
+            this.$set(this.addressList[0], 'selected', true);
+            this.handleSelectLocation(0);
+          }
+        }.bind(this),
+        fail: function(res) {},
+        complete: function(res) {}
+      });
+    },
+    moveToLocation(latitude, longitude) {
+      this.mapInfo.latitude = latitude;
+      this.mapInfo.longitude = longitude;
+      this.markers[0].latitude = latitude;
+      this.markers[0].longitude = longitude;
+      this.mapCtx.moveToLocation({
+        longitude: longitude,
+        latitude: latitude
+      });
+    },
+    handleSelectLocation(index) {
+      // Vue中  this.addressList[index].selected = !this.addressList[index].selected
+      this.addressList.forEach((_item, _index) => {
+        if (_index == index) {
+          this.$set(this.addressList[_index], 'selected', true);
+          this.moveToLocation(_item.location.lat, _item.location.lng);
+        } else {
+          this.$set(this.addressList[_index], 'selected', false);
+        }
+      });
+    },
+    closeDialog() {
+      this.showModal = false;
+    },
+    authSuccess() {
+      this.showModal = false;
+    },
+    handleSubmitSuccess() {
+      if (this.addressList.length > 0) {
+        let isSelected = false;
+        let row = {};
+        this.addressList.forEach(item => {
+          if (item.selected) {
+            isSelected = true;
+            row = item;
+          }
+        });
+        if (isSelected) {
+          this.eventChannel.emit('successAddress', row);
+          wx.navigateBack({
+            delta: 1
+          });
+        } else {
+          wx.showToast({
+            title: '请选择您的地址哦～',
+            icon: 'none',
+            duration: 1500
+          });
+        }
+      } else {
+        wx.showToast({
+          title: '请选择您的地址哦～',
+          icon: 'none',
+          duration: 1500
+        });
+      }
+    }
+  },
+  created() {},
+  onLoad(o) {
+    this.eventChannel = this.$wx.getOpenerEventChannel();
+    this.throttleSearch = throttle(this.handleSearch, 1200);
+    const systemHeight = getSysHeight();
+    // 获取搜索内容区域高度
+    const isIhoneX = getClientType().indexOf('iPhone X') != -1;
+    this.searchHeight = systemHeight - changeRPXToPX(450);
+    this.scrollHeight = this.searchHeight - changeRPXToPX(isIhoneX ? 288 : 268);
+    this.mapCtx = wx.createMapContext('map');
+    this.qqmapsdk = new QQMapWX({
+      key: this.key
+    });
+    wx.getLocation({
+      type: 'gcj02',
+      success: function(res) {
+        const latitude = res.latitude;
+        const longitude = res.longitude;
+        this.mapInfo.longitude = longitude;
+        this.mapInfo.latitude = latitude;
+        this.markers[0].latitude = latitude;
+        this.markers[0].longitude = longitude;
+        this.qqmapsdk.reverseGeocoder({
+          location: {
+            latitude: latitude,
+            longitude: longitude
+          },
+          sig: this.sk,
+          success: function({ result }) {
+            let address = result.formatted_addresses
+              ? result.formatted_addresses.recommend
+              : result.address;
+            this.currentAddrss = address;
+            this.searchLocation(address);
+          }.bind(this),
+          fail: function(err) {}
+        });
+      }.bind(this),
+      fail: function fail(err) {
+        this.mapInfo.longitude = this.markers[0].longitude;
+        this.mapInfo.latitude = this.markers[0].latitude;
+        this.searchLocation('扬州');
+        this.showModal = true;
+      }.bind(this)
+    });
+  }
+});
+</script>
+<config>
+{
+    navigationBarTitleText: '位置',
+    disableScroll: true,
+    usingComponents: {
+      "location-dialog": '~@/components/baseCom/locationDialog',
+    }
+}
+</config>
