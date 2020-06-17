@@ -1,5 +1,5 @@
 
-![图片](/static/temp.png)
+![图片](https://xiyuexq.oss-cn-shanghai.aliyuncs.com/IMG_2075.JPG?OSSAccessKeyId=TMP.3Ke9fSWHEA6pDXRDwEQGhfAMjnFf2uPDTC6nd8EJJQ1wrUCjn1Tbo4gG5cegCRud4CLrRxqWJ2n3n8uweXPyfJrUSWf43S&Expires=1592378113&Signature=2Foh6pLOt/U1PT9bAasYWONFTRs%3D)
 ### 肯定要看文档啊
 二话不说，这是小程序wepy框架选择——腾讯地图
 
