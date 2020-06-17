@@ -1,13 +1,21 @@
+
+![图片](/static/temp.png)
 ### 肯定要看文档啊
 二话不说，这是小程序wepy框架选择——腾讯地图
 
 ##### 先上腾讯地图地址
 https://lbs.qq.com/miniProgram/jsSdk/jsSdkGuide/jsSdkOverview
 
-- npm install
-- npm run dev
+```bash
+
+// 安装依赖
+npm install
+// 启动
+npm run dev
 
 运行打开小程序
+```
+
 
 - 配置页面路径src/addressAdmin/selectPostion.wpy
 - 将key、SK替换成自己的
